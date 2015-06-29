@@ -15,7 +15,7 @@ class Tile
     [1, -1]
   ]
 
-  def initialize(board = nil, pos)
+  def initialize(board, pos)
     @board = board
     @bombed = false
     @flagged = false
@@ -35,18 +35,18 @@ class Tile
   end
 
   def flag
-    self.flagged = !flagged
+    self.flagged = !flagged unless revealed
   end
 
   def inspect
     if flagged
       return "⚐"
     elsif revealed
+      return "💣" if bombed
       return neighbor_count
     else
       "*"
     end
-
   end
 
   def to_s
@@ -65,7 +65,6 @@ class Tile
     else
       return count
     end
-
   end
 
   def get_neighbors
@@ -76,5 +75,4 @@ class Tile
     end
     neighbors
   end
-
 end
