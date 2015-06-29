@@ -1,11 +1,16 @@
 require_relative 'tile.rb'
+require 'yaml'
 
 class Board
   attr_reader :grid, :bombed_positions
 
-  def initialize(filename = nil)
+  def initialize
     @grid = Array.new(9) {Array.new(9)}
     populate
+  end
+
+  def self.from_file(filename)
+    YAML.load_file(filename)
   end
 
   def [](row, col)
