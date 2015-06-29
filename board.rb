@@ -1,9 +1,7 @@
 require_relative 'tile.rb'
 
 class Board
-
   attr_reader :grid, :bombed_positions
-
 
   def initialize(filename = nil)
     @grid = Array.new(9) {Array.new(9)}
@@ -32,13 +30,15 @@ class Board
   def pick_bomb_positions
     bomb_positions = []
     until bomb_positions.length == 9
-      pos = [(0..8).to_a.sample, (0..8).to_a.sample]
+      pos = [rand(9), rand(9)]
       bomb_positions << pos unless bomb_positions.include?(pos)
     end
+
     bomb_positions
   end
 
   def render
+    system("clear")
     puts "  #{(0..8).to_a.join(" ")}"
     grid.each_with_index do |row, i|
       puts "#{i} #{row.join(" ")}"
@@ -46,16 +46,31 @@ class Board
   end
 
   def render_losing_board
+    system("clear")
     bombed_positions.each do |pos|
-      board[*pos].flagged = false
-      board[*pos].reveal
+      self[*pos].flagged = false
+      self[*pos].reveal
     end
     render
+    puts "Game over!"
   end
 
-end
+  def over?
+    bomb_revealed? || won?
+  end
 
-b = Board.new
-b.render
-b[0,0].reveal
-b.render
+  def bomb_revealed?
+    bombed_positions.any?{|pos| self[*pos].revealed}
+  end
+
+  def won?
+    grid.each_with_index do |row, row_num|
+      row.each_with_index do |tile, col_num|
+        return false if tile.revealed && tile.bombed
+        return false if !tile.revealed && !tile.bombed
+      end
+    end
+
+    true
+  end
+end
