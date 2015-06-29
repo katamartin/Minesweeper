@@ -1,10 +1,12 @@
 require_relative 'board'
+require 'yaml'
 
 class Game
   attr_reader :board
 
   def initialize
-    @board = Board.new
+    filename = prompt_for_load
+    @board = filename ? Board.from_file(filename) : Board.new
     play
   end
 
@@ -31,11 +33,14 @@ class Game
   end
 
   def prompt
-    print "Do you want to flag \"f\" or reveal \"r\"? "
+    print "Do you want to flag \"f\", reveal \"r\", or save and quit \"q\"? "
     action = gets.chomp
     until valid_action?(action)
-      print "Please enter a valid action (f or r): "
+      print "Please enter a valid action (f or r or q): "
       action = gets.chomp
+    end
+    if action == "q"
+      return save_and_quit
     end
     print "Choose a position: "
     pos = gets.chomp.split(",").map(&:to_i)
@@ -48,12 +53,33 @@ class Game
   end
 
   def valid_action?(action)
-    ["f", "r"].include?(action.downcase)
+    ["f", "r", "q"].include?(action.downcase)
   end
 
   def valid_pos?(pos)
     pos.length == 2 && pos.all? { |coord| coord.between?(0,8) }
   end
+
+  def save_and_quit
+    time_stamp = Time.now.to_s[0..18]
+    File.open("#{time_stamp}.yaml", "w"){|f| f.puts(board.to_yaml)}
+    abort("Saved to #{time_stamp}.yaml")
+  end
+
+  def prompt_for_load
+    print "Do you want to load from file (y/n)? "
+    action = gets.chomp.downcase
+    until action == "y" || action == "n"
+      print "Please choose either \"y\" or \"n\":"
+      action = gets.chomp.downcase
+    end
+    return nil if action == "n"
+
+    print "Please enter the filename to load: "
+
+    filename = gets.chomp.downcase
+  end
+
 end
 
 if $PROGRAM_NAME == __FILE__
