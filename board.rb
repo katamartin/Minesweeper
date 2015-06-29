@@ -2,7 +2,7 @@ require_relative 'tile.rb'
 
 class Board
 
-  attr_reader :grid
+  attr_reader :grid, :bombed_positions
 
 
   def initialize(filename = nil)
@@ -18,15 +18,13 @@ class Board
     @grid[row][col] = value
   end
 
-
-
   def populate
-    bomb_positions = pick_bomb_positions
+    @bombed_positions = pick_bomb_positions
     grid.each_with_index do |row, idx1|
       row.each_with_index do |el, idx2|
         tile = Tile.new(self, [idx1, idx2])
         self[idx1, idx2] = tile
-        tile.bombed = true if bomb_positions.include?([idx1, idx2])
+        tile.bombed = true if bombed_positions.include?([idx1, idx2])
       end
     end
   end
@@ -40,7 +38,24 @@ class Board
     bomb_positions
   end
 
+  def render
+    puts "  #{(0..8).to_a.join(" ")}"
+    grid.each_with_index do |row, i|
+      puts "#{i} #{row.join(" ")}"
+    end
+  end
+
+  def render_losing_board
+    bombed_positions.each do |pos|
+      board[*pos].flagged = false
+      board[*pos].reveal
+    end
+    render
+  end
+
 end
 
 b = Board.new
-p b
+b.render
+b[0,0].reveal
+b.render

@@ -2,6 +2,7 @@
 
 class Tile
   attr_accessor :bombed, :flagged, :revealed, :position, :neighbors
+  attr_reader :board
 
   DIRECTIONS = [
     [1, 0],
@@ -24,7 +25,17 @@ class Tile
   end
 
   def reveal
-    @revealed = true unless flagged
+    self.revealed = true unless flagged
+    if neighbor_count == "_" && !bombed
+      neighbors.each do |neighbor|
+        neighbor_tile = board[*neighbor]
+        neighbor_tile.reveal unless neighbor_tile.revealed
+      end
+    end
+  end
+
+  def flag
+    self.flagged = !flagged
   end
 
   def inspect
@@ -36,6 +47,10 @@ class Tile
       "*"
     end
 
+  end
+
+  def to_s
+    inspect.to_s
   end
 
   def neighbor_count
@@ -50,7 +65,7 @@ class Tile
     else
       return count
     end
-    
+
   end
 
   def get_neighbors
