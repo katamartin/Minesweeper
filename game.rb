@@ -1,5 +1,6 @@
 require_relative 'board'
 require 'yaml'
+require 'io/console'
 
 class Game
   attr_reader :board
@@ -12,11 +13,11 @@ class Game
 
   def play
     until board.over?
-      board.render
-      play_turn
+      board.display
+      make_move
     end
     if board.won?
-      board.render
+      board.display
       puts "Congrats! You win!"
       store_time
       display_leaderboard
@@ -49,43 +50,6 @@ class Game
     end
   end
 
-  def play_turn
-    action, pos = prompt
-    if action  == "r"
-      board[*pos].reveal
-    else
-      board[*pos].flag
-    end
-  end
-
-  def prompt
-    print "Do you want to flag \"f\", reveal \"r\", or save and quit \"q\"? "
-    action = gets.chomp
-    until valid_action?(action)
-      print "Please enter a valid action (f or r or q): "
-      action = gets.chomp
-    end
-    if action == "q"
-      return save_and_quit
-    end
-    print "Choose a position: "
-    pos = gets.chomp.split(",").map(&:to_i)
-    until valid_pos?(pos)
-      print "Please enter a valid position: "
-      pos = gets.chomp.split(",").map(&:to_i)
-    end
-
-    [action, pos]
-  end
-
-  def valid_action?(action)
-    ["f", "r", "q"].include?(action.downcase)
-  end
-
-  def valid_pos?(pos)
-    pos.length == 2 && pos.all? { |coord| coord.between?(0,8) }
-  end
-
   def save_and_quit
     filename = prompt_for("filename")
     board.elapsed_time += Time.now - board.start_time
@@ -116,6 +80,54 @@ class Game
     print "Please enter the filename to load: "
 
     filename = gets.chomp.downcase
+  end
+
+  def read_char
+    STDIN.echo = false
+    STDIN.raw!
+
+    input = STDIN.getc.chr
+    if input == "\e" then
+      input << STDIN.read_nonblock(3) rescue nil
+      input << STDIN.read_nonblock(2) rescue nil
+    end
+  ensure
+    STDIN.echo = true
+    STDIN.cooked!
+
+    return input
+  end
+
+  def make_move
+    move_made = false
+    until move_made
+      move_made = move_highlight
+    end
+  end
+
+  def move_highlight
+    c = read_char
+    case c
+    when "\e[A"
+      board.move_highlight([-1, 0])
+    when "\e[B"
+      board.move_highlight([1, 0])
+    when "\e[C"
+      board.move_highlight([0, 1])
+    when "\e[D"
+      board.move_highlight([0, -1])
+    when "r"
+      board[*board.highlighted].reveal
+      return true
+    when "f"
+      board[*board.highlighted].flag
+      return true
+    when "q"
+      save_and_quit
+    end
+    system("clear")
+    board.display
+    false
   end
 
 end
