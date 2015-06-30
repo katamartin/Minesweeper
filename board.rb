@@ -1,15 +1,17 @@
 require_relative 'tile.rb'
 require 'yaml'
+require 'colorize'
 
 class Board
   attr_reader :grid, :bombed_positions
-  attr_accessor :start_time, :elapsed_time
+  attr_accessor :start_time, :elapsed_time, :highlighted
 
   def initialize
     @grid = Array.new(9) {Array.new(9)}
     populate
     @start_time = Time.now
     @elapsed_time = 0
+    @highlighted = [0, 0]
   end
 
   def self.from_file(filename)
@@ -39,7 +41,7 @@ class Board
 
   def pick_bomb_positions
     bomb_positions = []
-    until bomb_positions.length == 3
+    until bomb_positions.length == 9
       pos = [rand(9), rand(9)]
       bomb_positions << pos unless bomb_positions.include?(pos)
     end
@@ -47,12 +49,22 @@ class Board
     bomb_positions
   end
 
-  def render
+
+  def display
     system("clear")
-    puts "  #{(0..8).to_a.join(" ")}"
-    grid.each_with_index do |row, i|
-      puts "#{i} #{row.join(" ")}"
+    (0..8).each do |row|
+      (0..8).each do |col|
+        if [row, col] == highlighted
+          print "#{self[row,col]}".colorize(:background => :red)
+        else
+          print "#{self[row, col]}"
+        end
+        print " "
+      end
+      puts ""
     end
+    puts "Navigate using arrow keys."
+    puts "Press \"r\" to reveal, \"f\" to flag, or \"q\" to save and quit."
   end
 
   def render_losing_board
@@ -61,7 +73,7 @@ class Board
       self[*pos].flagged = false
       self[*pos].reveal
     end
-    render
+    display
     puts "Game over!"
   end
 
@@ -84,4 +96,10 @@ class Board
     self.elapsed_time += Time.now - start_time
     true
   end
+
+  def move_highlight(dx)
+    new_highlight = [self.highlighted[0] + dx[0], self.highlighted[1] + dx[1]]
+    self.highlighted = new_highlight if new_highlight.all? { |x| x.between?(0, 8) }
+  end
+
 end
