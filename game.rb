@@ -18,8 +18,34 @@ class Game
     if board.won?
       board.render
       puts "Congrats! You win!"
+      store_time
+      display_leaderboard
     else
       board.render_losing_board
+    end
+  end
+
+  def store_time
+    username = prompt_for("username")
+    winners_lines = File.readlines('winners.txt').map(&:chomp)
+    winners_and_scores = winners_lines.map{|line| line.split(", ")}
+    winners_and_scores << [board.elapsed_time, username]
+    winners_and_scores = winners_and_scores.sort_by{|el| el[0].to_i}[0..9]
+    text = winners_and_scores.map {|el| el.join(", ")}.join("\n")
+    File.open('winners.txt', 'w+') {|f| f.puts(text)}
+  end
+
+  def display_leaderboard
+    system("clear")
+    winners_lines = File.readlines('winners.txt').map(&:chomp)
+    winners_and_scores = winners_lines.map{|line| line.split(", ")}
+    puts "   LEADERBOARD:"
+    puts "   Time (seconds), Username"
+    winners_and_scores.each_with_index do |winner, idx|
+      index = "#{idx + 1}".ljust(3)
+      time = "#{winner[0].to_i}".ljust(16)
+      name = "#{winner[1]}"
+      puts "#{index}#{time}#{name}"
     end
   end
 
@@ -61,9 +87,21 @@ class Game
   end
 
   def save_and_quit
-    time_stamp = Time.now.to_s[0..18]
-    File.open("#{time_stamp}.yaml", "w"){|f| f.puts(board.to_yaml)}
-    abort("Saved to #{time_stamp}.yaml")
+    filename = prompt_for("filename")
+    board.elapsed_time += Time.now - board.start_time
+    File.open("#{filename}.yaml", "w"){|f| f.puts(board.to_yaml)}
+    abort("Saved to #{filename}.yaml")
+  end
+
+  def prompt_for(name)
+    print "Please enter a #{name}: "
+    input = gets.chomp
+    until input.length > 0
+      print "Please enter a valid #{name}: "
+      input = gets.chomp
+    end
+
+    input
   end
 
   def prompt_for_load

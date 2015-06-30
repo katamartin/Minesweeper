@@ -3,14 +3,19 @@ require 'yaml'
 
 class Board
   attr_reader :grid, :bombed_positions
+  attr_accessor :start_time, :elapsed_time
 
   def initialize
     @grid = Array.new(9) {Array.new(9)}
     populate
+    @start_time = Time.now
+    @elapsed_time = 0
   end
 
   def self.from_file(filename)
-    YAML.load_file(filename)
+    board = YAML.load_file(filename)
+    board.start_time = Time.now
+    board
   end
 
   def [](row, col)
@@ -34,7 +39,7 @@ class Board
 
   def pick_bomb_positions
     bomb_positions = []
-    until bomb_positions.length == 9
+    until bomb_positions.length == 3
       pos = [rand(9), rand(9)]
       bomb_positions << pos unless bomb_positions.include?(pos)
     end
@@ -76,6 +81,7 @@ class Board
       end
     end
 
+    self.elapsed_time += Time.now - start_time
     true
   end
 end
